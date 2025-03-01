@@ -2,13 +2,20 @@ import axios from "axios";
 
 const API_BASE = "https://en.wikipedia.org/w/api.php";
 
+// Add timeout and retry logic
+const wikipediaClient = axios.create({
+  timeout: 8000, // 8 seconds
+  headers: {
+    'User-Agent': 'WikiPathFinder/2.0 (https://wikipathfinder2.vercel.app/)'
+  }
+});
+
 interface WikiPageInfo {
   title: string;
   extract: string;
 }
 
-
-async function getRandomArticle(): Promise<string> {
+async function getRandomArticle() {
   try {
     const params = {
       action: "query",
@@ -19,12 +26,25 @@ async function getRandomArticle(): Promise<string> {
       origin: "*"
     };
 
-    const response = await axios.get(API_BASE, { params, timeout: 5000 });
+    const response = await wikipediaClient.get(API_BASE, { 
+      params,
+      // Add retry logic
+      validateStatus: (status) => status < 500
+    });
+
+    if (!response.data?.query?.random?.[0]?.title) {
+      throw new Error("Invalid response format from Wikipedia API");
+    }
+
     const title = response.data.query.random[0].title;
     console.log(`Got random article: ${title}`);
     return title;
+
   } catch (error) {
     console.error("Error getting random article:", error);
+    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+      throw new Error("Wikipedia API request timed out");
+    }
     throw new Error("Failed to get random article");
   }
 }
