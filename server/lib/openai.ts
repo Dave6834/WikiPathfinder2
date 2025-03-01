@@ -1,12 +1,19 @@
 import OpenAI from "openai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error("OPENAI_API_KEY is not set in environment variables");
+}
+
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 8000,
+  maxRetries: 2
+});
 
 async function generateArticleDescription(title: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -31,7 +38,7 @@ async function generateArticleDescription(title: string): Promise<string> {
 async function findConnection(startWord: string, endWord: string): Promise<{ path: string[], story: string }> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -60,7 +67,6 @@ Return your response in this JSON format:
       max_tokens: 1000
     });
 
-    // ✅ Ensure content is a valid string before parsing
     const content = response.choices[0].message.content;
     
     if (typeof content !== "string" || content.trim() === "") {
@@ -80,6 +86,9 @@ Return your response in this JSON format:
     };
   } catch (error) {
     console.error("OpenAI API error:", error);
+    if (error instanceof Error) {
+      throw new Error(`OpenAI API error: ${error.message}`);
+    }
     throw new Error("Failed to find connection between articles");
   }
 }
