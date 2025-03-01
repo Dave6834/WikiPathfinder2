@@ -6,8 +6,9 @@ dotenv.config();
 
 console.log("API Key Loaded:", process.env.OPENAI_API_KEY ? "✅ Exists" : "❌ Missing");
 
+// Create and export the app
+export const app = express();
 
-const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
