@@ -11,10 +11,13 @@ export async function registerRoutes(app: Express) {
       const title = await wikipedia.getRandomArticle();
       res.json({ title });
     } catch (error) {
-      console.error("Random article error:", error);
+      console.error("Random article error details:", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined
+      });
       res.status(500).json({ 
         error: "Failed to get random article",
-        message: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
@@ -60,27 +63,37 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/search", async (req, res) => {
     try {
+      console.log("Search request received:", req.body);
+      
       const { startWord, endWord } = req.body;
-
       if (!startWord || !endWord) {
         return res.status(400).json({ error: "Both start and end articles are required" });
       }
 
+      console.log("Calling OpenAI findConnection...");
       const { path, story } = await ai.findConnection(startWord, endWord);
+      console.log("OpenAI response received");
 
+      console.log("Creating search record...");
       const search = await storage.createSearch({
         startWord,
         endWord,
         path,
         story
       });
+      console.log("Search record created");
 
       res.json(search);
     } catch (error) {
-      console.error("Search error:", error);
-      res.status(500).json({ 
+      console.error("Search error details:", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        body: req.body
+      });
+      
+      res.status(500).json({
         error: "Search failed",
-        message: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
