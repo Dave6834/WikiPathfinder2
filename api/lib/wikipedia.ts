@@ -37,6 +37,57 @@ async function getRandomArticle() {
   }
 }
 
+async function searchArticles(query: string) {
+  try {
+    const params = {
+      action: "opensearch",
+      format: "json",
+      search: query,
+      limit: 5,
+      namespace: 0,
+      origin: "*"
+    };
+    const response = await wikipediaClient.get(API_BASE, { params });
+    return response.data[1] || [];
+  } catch (error) {
+    console.error("Wikipedia search error:", error);
+    return [];
+  }
+}
+
+async function getPageInfo(title: string) {
+  try {
+    const params = {
+      action: "query",
+      format: "json",
+      titles: title,
+      prop: "extracts",
+      exintro: true,
+      explaintext: true,
+      redirects: true,
+      origin: "*"
+    };
+    const response = await wikipediaClient.get(API_BASE, { params });
+    const pages = response.data.query.pages;
+    const pageId = Object.keys(pages)[0];
+    const page = pages[pageId];
+    
+    if (page.missing) {
+      return null;
+    }
+    
+    return {
+      title: page.title,
+      extract: page.extract
+    };
+  } catch (error) {
+    console.error("Wikipedia API error:", error);
+    return null;
+  }
+}
+
 export const wikipedia = {
-  getRandomArticle
+  getRandomArticle,
+  searchArticles,
+  getPageInfo
 }; 
