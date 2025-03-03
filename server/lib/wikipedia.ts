@@ -48,7 +48,7 @@ async function getRandomArticle() {
       error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
       isAxiosError: axios.isAxiosError(error),
-      timeout: error.code === 'ECONNABORTED'
+      timeout: error instanceof Error && 'code' in error && error.code === 'ECONNABORTED'
     });
     throw error;
   }
