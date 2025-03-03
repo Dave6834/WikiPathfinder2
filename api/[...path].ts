@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createServer } from 'http'
-import { app } from '../server'
+import { app } from '../server/index.js'
 
 const server = createServer(app)
 
