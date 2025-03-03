@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { wikipedia } from './lib/wikipedia.js'
 import { ai } from './lib/openai.js'
 import { storage } from './storage.js'
@@ -8,7 +8,7 @@ const app = express()
 app.use(express.json())
 
 // Random article endpoint
-app.get("/api/random", async (_req, res) => {
+app.get("/api/random", async (_req: Request, res: Response) => {
   try {
     const title = await wikipedia.getRandomArticle();
     res.json({ title });
@@ -21,7 +21,7 @@ app.get("/api/random", async (_req, res) => {
 });
 
 // Search articles endpoint
-app.get("/api/search-articles", async (req, res) => {
+app.get("/api/search-articles", async (req: Request, res: Response) => {
   try {
     const query = req.query.q as string;
     if (!query) {
@@ -35,7 +35,7 @@ app.get("/api/search-articles", async (req, res) => {
 });
 
 // Search endpoint
-app.post("/api/search", async (req, res) => {
+app.post("/api/search", async (req: Request, res: Response) => {
   try {
     const { startWord, endWord } = req.body;
     if (!startWord || !endWord) {
@@ -59,7 +59,7 @@ app.post("/api/search", async (req, res) => {
 });
 
 // Get searches endpoint
-app.get("/api/searches", async (_req, res) => {
+app.get("/api/searches", async (_req: Request, res: Response) => {
   try {
     const searches = await storage.getSearches();
     res.json(searches);
@@ -76,7 +76,7 @@ export default function handler(
   res: VercelResponse,
 ) {
   return new Promise((resolve) => {
-    app(req, res, resolve)
+    app(req as any, res as any, resolve)
   })
 }
 
