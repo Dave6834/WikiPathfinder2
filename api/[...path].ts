@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { wikipedia } from './lib/wikipedia.js'
-import { ai } from './lib/openai.js'
-import { storage } from './storage.js'
+import { wikipedia } from './lib/wikipedia'
+import { ai } from './lib/openai'
+import { storage } from './storage'
 
 export const config = {
   api: {
