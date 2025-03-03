@@ -4,7 +4,7 @@ const API_BASE = "https://en.wikipedia.org/w/api.php";
 
 // Add timeout and retry logic
 const wikipediaClient = axios.create({
-  timeout: 8000, // 8 seconds
+  timeout: 10000, // 10 seconds
   headers: {
     'User-Agent': 'WikiPathFinder/2.0 (https://wikipathfinder2.vercel.app/)'
   }
@@ -17,6 +17,7 @@ interface WikiPageInfo {
 
 async function getRandomArticle() {
   try {
+    console.log('Fetching random article...');
     const params = {
       action: "query",
       format: "json",
@@ -28,11 +29,13 @@ async function getRandomArticle() {
 
     const response = await wikipediaClient.get(API_BASE, { 
       params,
-      // Add retry logic
       validateStatus: (status) => status < 500
     });
 
+    console.log('Wikipedia API response received');
+    
     if (!response.data?.query?.random?.[0]?.title) {
+      console.error('Invalid Wikipedia response:', response.data);
       throw new Error("Invalid response format from Wikipedia API");
     }
 
@@ -41,11 +44,13 @@ async function getRandomArticle() {
     return title;
 
   } catch (error) {
-    console.error("Error getting random article:", error);
-    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
-      throw new Error("Wikipedia API request timed out");
-    }
-    throw new Error("Failed to get random article");
+    console.error("Random article error details:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      isAxiosError: axios.isAxiosError(error),
+      timeout: error.code === 'ECONNABORTED'
+    });
+    throw error;
   }
 }
 

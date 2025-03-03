@@ -6,14 +6,15 @@ if (!process.env.OPENAI_API_KEY) {
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 8000,
-  maxRetries: 2
+  timeout: 30000,
+  maxRetries: 3
 });
 
 async function generateArticleDescription(title: string): Promise<string> {
   try {
+    console.log(`Generating description for ${title}`);
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -28,17 +29,24 @@ async function generateArticleDescription(title: string): Promise<string> {
       max_tokens: 100
     });
 
+    console.log('Description generated successfully');
     return response.choices[0].message.content || `Description of ${title}`;
   } catch (error) {
-    console.error("OpenAI API error:", error);
+    console.error("OpenAI API error in generateArticleDescription:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      title
+    });
     return `Brief description of ${title}`;
   }
 }
 
 async function findConnection(startWord: string, endWord: string): Promise<{ path: string[], story: string }> {
   try {
+    console.log(`Starting findConnection for ${startWord} to ${endWord}`);
+    console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
+    
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -67,16 +75,19 @@ Return your response in this JSON format:
       max_tokens: 1000
     });
 
+    console.log('OpenAI response received');
     const content = response.choices[0].message.content;
     
     if (typeof content !== "string" || content.trim() === "") {
       throw new Error("Invalid response from OpenAI: message.content is null or empty.");
     }
 
+    console.log('Parsing OpenAI response');
     const result = JSON.parse(content);
 
     if (!result.path || !Array.isArray(result.path) || !result.story || 
         !result.path.includes(startWord) || !result.path.includes(endWord)) {
+      console.error('Invalid response structure:', result);
       throw new Error("Invalid response format from AI");
     }
 
@@ -85,11 +96,13 @@ Return your response in this JSON format:
       story: result.story
     };
   } catch (error) {
-    console.error("OpenAI API error:", error);
-    if (error instanceof Error) {
-      throw new Error(`OpenAI API error: ${error.message}`);
-    }
-    throw new Error("Failed to find connection between articles");
+    console.error("OpenAI API error details:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      startWord,
+      endWord
+    });
+    throw error;
   }
 }
 
